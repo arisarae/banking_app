@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Form</title>
+    <style>
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Transaction Form</h2>
+    <form id="transactionForm" method="post">
+        <label for="fromAccount">From Account:</label>
+        <select id="fromAccount" name="fromAccount">
+            <!-- Populate with logged-in user's account -->
+            {% for account in response_data['accounts'] %}
+            <option value="{{ account.id }}">{{ account.account_number }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="toAccount">To Account:</label>
+        <select id="toAccount" name="toAccount">
+            <!-- Populate with options dynamically from database -->
+            {% for account in response_data['accounts'] %}
+            <option value="{{ account.id }}">{{ account.account_number }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="amount">Amount:</label>
+        <input type="number" id="amount" name="amount" required>
+
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+
+        <input type="submit" value="Submit Transaction">
+    </form>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script>
+        $('#transactionForm').submit(function (e) {
+            e.preventDefault();
+
+            var formData = {
+                fromAccount: $('#fromAccount').val(),
+                toAccount: $('#toAccount').val(),
+                amount: $('#amount').val(),
+                description: $('#description').val()
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '{{ url_for("transaction_routes.transaction_insert") }}',
+                data: formData,
+                dataType: 'json',
+                encode: true
+            })
+                .done(function (data) {
+                    alert(data.message);
+                    location.reload();
+                })
+                .fail(function (data) {
+                    alert('Error occurred. Please try again.');
+                });
+        });
+    </script>
+</body>
+
+</html>

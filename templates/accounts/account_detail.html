@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Transactions</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h2>Account Details</h2>
+    <a href="{{ url_for('account_routes.account_home') }}">Back</a>
+
+    <div>
+        <h3>Account Number: {{ account.account_number }}</h3>
+        <p>Account Type: {{ account.account_type }}</p>
+        <p>Balance: {{ account.balance }}</p>
+    </div>
+
+    <h2>Account Transactions</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in account.transactions %}
+            <tr>
+                <td>{{ transaction.id }}</td>
+                <td>{{ transaction.amount }}</td>
+                <td>{{ transaction.description }}</td>
+                <td>{{ transaction.date }}</td>
+            </tr>
+            {% endfor %}
+            <!-- Add more <tr> elements for additional transactions -->
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounts List</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        /* Basic styling for search bar */
+        .search-container {
+            margin-top: 20px;
+        }
+        
+        .search-input {
+            padding: 10px;
+            width: 300px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        
+        .search-button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        Hello, {{ response_data['name'] }}
+        <a href="/logout">Logout</a>
+    </div>
+    <h2>Accounts List</h2>
+    <button onclick="openNewAccountForm()">Add New Account</button>
+    <div class="search-container">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search...">
+        <button class="search-button" onclick="search()">Search</button>
+    </div>
+    <hr style="border:none;"/>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Account Number</th>
+                <th>Account Type</th>
+                <th>Balance</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for account in response_data['accounts'] %}
+            <tr>
+                <td>{{ account.id }}</td>
+                <td id="number_{{ account.id }}">{{ account.account_number }}</td>
+                <td id="type_{{ account.id }}">{{ account.account_type }}</td>
+                <td id="balance_{{ account.id }}">{{ account.balance }}</td>
+                <td>
+                    <a href="{{ url_for('account_routes.account_detail', id=account.id) }}">Transaction Details</a>
+                    <button onclick="openEditAccountForm(this)" id="edit_{{ account.id }}">Edit</button>
+                    <button onclick="deleteAccount(this)" id="delete_{{ account.id }}">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div id="newAccountForm" style="display: none;">
+        <h3 id="formSection">Add New Account</h3>
+        <form id="accountForm">
+            <div class="form-group">
+                <label for="accountNumber">Account Number:</label>
+                <input type="text" id="accountNumber" name="accountNumber"><br><br>
+            </div>
+            <div class="form-group">
+                <label for="accountType">Account Type:</label>
+                <input type="text" id="accountType" name="accountType"><br><br>
+            </div>
+            <div class="form-group">
+                <label for="balance">Balance:</label>
+                <input type="number" id="balance" name="balance"><br><br>
+            </div>
+            <button type="button" onclick="submitForm()">Submit</button>
+            <button type="button" onclick="closeNewAccountForm()">Cancel</button>
+        </form>
+        <div id="error-message" class="error-message" style="display: none;"></div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script>
+        var formUrl = "";
+        var formMethod = "";
+        var baseUrl = "{{ url_for('account_routes.account_home') }}";
+
+        function openNewAccountForm() {
+            formMethod = 'POST';
+            formUrl = "{{ url_for('account_routes.account_insert') }}";
+            document.getElementById("newAccountForm").style.display = "block";
+            document.getElementById("formSection").innerHTML = "Add New Account";
+            document.getElementById("accountForm").reset();
+        }
+
+        function openEditAccountForm(button) {
+            var selected_accounts_id = button.id.split("_")[1];
+            formMethod = 'PUT';
+            formUrl = baseUrl + "/" + selected_accounts_id;
+
+            var number = $('#number_'+selected_accounts_id).html();
+            var type = $('#type_'+selected_accounts_id).html();
+            var balance = $('#balance_'+selected_accounts_id).html();
+
+            $('#accountNumber').val(number);
+            $('#accountType').val(type);
+            $('#balance').val(balance);
+
+            document.getElementById("newAccountForm").style.display = "block";
+            document.getElementById("formSection").innerHTML = "Edit Account";
+        }
+
+        function closeNewAccountForm() {
+            $('#error-message').hide();
+            document.getElementById("newAccountForm").style.display = "none";
+        }
+
+        function submitForm() {
+            var number = $('#accountNumber').val();
+            var type = $('#accountType').val();
+            var balance = $('#balance').val();
+
+            // Basic validation
+            if (number.trim() === '' || type.trim() === '' || balance.trim() === '') {
+                $('#error-message').text('Please fill in all fields.');
+                $('#error-message').show();
+                return;
+            }
+
+            // Proceed with form submission
+            var request_data = {
+                accountNumber: number,
+                accountType: type,
+                balance: balance
+            }
+
+            $.ajax({
+                url: formUrl,
+                data: request_data,
+                method: formMethod
+            }).done(function(response){
+                alert(response.message);
+                location.reload();
+            }).fail(function(xhr, status, error) {
+                $('#error-message').text('An error occurred while processing your request.');
+                $('#error-message').show();
+            });
+        }
+
+        function deleteAccount(button) {
+            if (confirm("Are you sure you want to delete this account?")) {
+                var selected_Accounts_id = button.id.split("_")[1];
+                var delete_url = baseUrl + "/" + selected_Accounts_id;
+
+                $.ajax({
+                    url: delete_url,
+                    method: "DELETE"
+                }).done(function(response){
+                    alert(response.message);
+                    location.reload();
+                }).fail(function(xhr, status, error) {
+                    $('#error-message').text('An error occurred while processing your request.');
+                    $('#error-message').show();
+                });
+            }
+        }
+
+        function search() {
+            window.location = baseUrl + "?query=" + $('#searchInput').val();
+        }
+    </script>
+</body>
+</html>
